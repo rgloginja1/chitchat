@@ -1,2 +1,0 @@
-# chitchat
-ChitChat Repo
