@@ -1,0 +1,10 @@
+{
+     "name": "ChitChat",
+     "description": "Simple chat app using socket.io and Bootstrap",
+     "version": "0.1.4",
+     "dependencies": {
+        "express": "",
+        "socket.io": "",
+        "sqlite3": "~2.2.3"
+     }
+}

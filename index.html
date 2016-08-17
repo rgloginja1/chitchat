@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html>
+  <head>
+	
+	 <title>ChitChat</title>
+	 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+	
+	 <script src="/socket.io/socket.io.js"></script>
+
+	 <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+
+	 <!-- Bootstrap core CSS -->
+	 <link href="http://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.3.4/css/bootstrap.min.css" rel="stylesheet" media="screen">
+	 <link href="https://bootswatch.com/lumen/bootstrap.css" rel="stylesheet" media="screen">
+	 <!-- HTML5 shim and Respond.js IE8 support of HTML5 elements and media queries -->
+	 <!--[if lt IE 9]>
+		 <script src="http://cdnjs.cloudflare.com/ajax/libs/html5shiv/3.7.2/html5shiv.js"></script>
+		 <script src="http://cdnjs.cloudflare.com/ajax/libs/respond.js/1.4.2/respond.js"></script>
+	 <![endif]-->
+
+	 <style>
+	 /* Sticky footer styles
+-------------------------------------------------- */
+* {
+	border-radius: 0 !important;
+
+}
+html {
+ position: relative;
+ max-height: 100%;
+ min-height: 100%;
+ 
+}
+body {
+ /* Margin bottom by footer height */
+ margin-bottom: 60px;
+ bottom: 100;
+}
+
+.footer {
+   position:fixed;
+   left:0px;
+   bottom:0;
+   height:60px;
+   width:100%;
+}
+
+#conversation {
+	max-height:80% !important;
+	overflow: hidden;
+}
+.navbar-brand {
+    position: absolute;
+    width: 100%;
+    left: 0;
+    top: 0;
+    text-align: center;
+    margin: auto;
+}
+.navbar-toggle {
+    z-index:3;
+}
+/* Custom page CSS
+-------------------------------------------------- */
+/* Not required for template or sticky footer method. */
+
+
+	 </style>
+<script>
+	var focus = true;
+
+	$( document ).ready(function() {
+	    console.log( "ready!" );
+	    
+	    window.onblur = function() { focus = false; }
+		window.onfocus = function() { focus = true; }
+		
+		document.onblur = window.onblur;
+		document.focus = window.focus;
+
+	});
+
+	 function hello(obj) {
+	    var t = $(obj).text();
+	    if( t == 'SERVER') {
+	    	console.log('Trying to talk to server?');
+	    } else {
+	    	if(t[0] != '@'){
+	    		var input = $( "#data" );
+				input.val( input.val() + " @" + t + " " );
+	    	} else {
+	    		var input = $( "#data" );
+				input.val( input.val() + " " + t + " " );
+	    	}
+	    	
+	    }
+	    
+
+	   	$( "#data" ).focus();
+	 }
+
+
+	//var socket = io.connect('http://localhost:8080');
+	var socket = io.connect('http://45.55.174.18:8080');
+	//var socket = io.connect('http://10.1.1.10:8080');
+	
+	// on connection to server, ask for user's name with an anonymous callback
+	socket.on('connect', function(){
+		// call the server-side function 'adduser' and send one parameter (value of prompt)
+		//socket.emit('adduser', prompt("What's your name?"));
+		var NumberUser = Math.floor((Math.random() * 100000) + 1);
+
+		socket.emit('adduser','Anon' + NumberUser);
+	});
+
+	// listener, whenever the server emits 'updatechat', this updates the chat body
+	socket.on('updatechat', function (username, data) {
+
+		if(focus == true){
+			$(document).attr("title", "ChitChat");
+		}else{
+			$(document).attr("title", "ChitChat - New Message");
+		}
+		
+		$('#conversation').prepend('<b onclick="hello(this);">'+username + '</b> ' + data + '<hr/>');
+
+		$( "#data" ).focus();
+
+	});
+
+	socket.on('updatechatw', function (stuff) {
+
+		console.log(stuff);
+		$('#conversation').prepend('<b onclick="hello(this);">'+stuff.username + '</b> ' + stuff.data + '<hr/>');
+	});
+
+	// listener, whenever the server emits 'updaterooms', this updates the room the client is in
+	socket.on('updaterooms', function(rooms, current_room) {
+		$('#rooms').empty();
+		$('#rooms_menu').empty();
+		
+		//alert(chatHistory);
+
+		$.each(rooms, function(key, value) {
+			if(value == current_room){
+				$('#rooms').append('<div><p><small>' + value + '</small></p></div>');
+				$('#rooms_menu').append('<li><a href="#">'+ value +'</a></li>');
+				
+			}
+			else {
+				$('#rooms').append('<div><p><small><a href="#" onclick="switchRoom(\''+value+'\')">' + value + '</a></small></p></div>');
+				$('#rooms_menu').append('<li><a href="#" onclick="switchRoom(\''+value+'\')">' + value + '</a></li>');
+				
+			}
+		});
+	});
+
+	socket.on('updatepeople', function(userNamed) {
+		//console.log("asdf: " + userNamed);
+		$('#people').empty();
+		$('#people_menu').empty();
+		
+		$.each(userNamed, function(key, value) {
+			//console.log(value);
+			$('#people').prepend('<p><small>' + value + '</small></p>');
+			$('#people_menu').prepend('<li><a href="#">'+ value +'</a></li>');
+		});
+	});
+
+	function switchRoom(room){
+		$('#conversation').empty();
+		socket.emit('switchRoom', room);
+	}
+
+	// on load of page
+	$(function(){
+		// when the client clicks SEND
+		$('#datasend').click( function() {
+			
+
+			var message = $('#data').val();
+			$('#data').val('');
+			// tell server to execute 'sendchat' and send along one parameter
+			$('#footerdiv').hide();
+			setTimeout(function(){ $('#footerdiv').show(); $( "#data" ).focus(); }, 2000);
+			//$( "#data" ).focus();
+			socket.emit('sendchat', message);
+
+		});
+
+		// when the client hits ENTER on their keyboard
+		$('#data').keypress(function(e) {
+			if(e.which == 13) {
+				$(this).blur();
+				$('#datasend').focus().click();
+			}
+		});
+
+		
+	});
+
+</script>
+</head>
+<body>
+<nav class="navbar navbar-default">
+  <div class="container-fluid">
+    <!-- Brand and toggle get grouped for better mobile display -->
+    <div class="navbar-header">
+      <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#bs-example-navbar-collapse-1" aria-expanded="false">
+        <span class="sr-only">Toggle navigation</span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+      </button>
+      <a class="navbar-brand" href="#">ChitChat</a>
+    </div>
+
+    <!-- Collect the nav links, forms, and other content for toggling -->
+    <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
+      <ul class="nav navbar-nav">
+        
+        <li class="dropdown hidden-md hidden-lg">
+          <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">Rooms <span class="caret"></span></a>
+          <ul id="rooms_menu" class="dropdown-menu">
+            
+          </ul>
+        </li>
+
+        <li class="dropdown hidden-md hidden-lg">
+          <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">People <span class="caret"></span></a>
+          <ul id="people_menu" class="dropdown-menu">
+            
+          </ul>
+        </li>
+
+      </ul>
+      
+      
+    </div><!-- /.navbar-collapse -->
+  </div><!-- /.container-fluid -->
+</nav>
+
+<div class="container">
+	<div class="row">
+		<div class="col-md-2 hidden-xs hidden-sm well" style="max-height:75vh !important; overflow-y: scroll;">
+			<b>ROOMS</b><hr/>
+			<div id="rooms"></div>
+			<br/>
+			<b>PEOPLE</b><hr/>
+			<div id="people"></div>
+			
+		</div>
+		<div class="col-md-10">
+			<div class="alert alert-danger alert-dismissible hidden-xs hidden-sm" role="alert">
+			  <button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+			  <strong>Welcome To ChitChat!</strong> This is still in Beta mode and new features are being added all the time... Some may work, others may not.
+			</div>
+			<div id="conversation" style="max-height: 75vh !important;"></div>
+
+		</div>
+	</div>
+
+</div>
+<footer class="footer">
+		 <div class="container" id="footerdiv">
+			<div class="input-group">
+		      <input id="data" type="text" class="form-control" placeholder="Write something here...">
+		      <span class="input-group-btn">
+		        <button id="datasend" class="btn btn-default" type="button">Go!</button>
+		      </span>
+		    </div><!-- /input-group -->
+
+		 </div>
+	 </footer>
+
+
+    <script src="http://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.3.4/js/bootstrap.min.js"></script>
+</body>
+</html>
