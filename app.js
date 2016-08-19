@@ -150,7 +150,7 @@ io.sockets.on('connection', function (socket) {
 					console.log('Chat Database Cleared.');
 					socket.broadcast.emit('updatechat', 'SERVER', socket.username + ' has cleared the DB');
 
-					location.reload();
+					//location.reload();
 				} else {
 					console.log('Incorrect password supplied.');
 				}

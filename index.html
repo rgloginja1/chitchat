@@ -51,7 +51,7 @@ body {
 }
 
 .footer {
-   position:fixed;
+   position:absolute;
    left:0px;
    bottom:0;
    height:60px;
@@ -59,7 +59,6 @@ body {
 }
 
 #conversation {
-	max-height:80% !important;
 	overflow-y: scroll;
 }
 .navbar-brand {
@@ -76,6 +75,11 @@ body {
 
 hr {
 	margin: 10px;
+	background-color: white;
+}
+
+.well {
+	background-color: #f5f5f5;
 }
 	 </style>
 <script>
@@ -103,7 +107,7 @@ hr {
 	    } else {
 	    	if(t[0] != '@'){
 	    		var input = $( "#data" );
-				input.val( input.val() + " @" + t + " " );
+				input.val( input.val() + "@" + t + " " );
 	    	} else {
 	    		var input = $( "#data" );
 				input.val( input.val() + " " + t + " " );
@@ -116,9 +120,9 @@ hr {
 	 }
 
 
-	//var socket = io.connect('http://localhost:8080');
-	var socket = io.connect('http://45.55.174.18:8080');
-	
+	var socket = io.connect('http://localhost:8080');
+	//var socket = io.connect('http://45.55.174.18:8080');
+	var  myName;
 	// on connection to server, ask for user's name with an anonymous callback
 	socket.on('connect', function(){
 		// call the server-side function 'adduser' and send one parameter (value of prompt)
@@ -126,10 +130,12 @@ hr {
 		var NumberUser = Math.floor((Math.random() * 9999999) + 1);
 
 		socket.emit('adduser','Anon' + NumberUser);
+
+		myName = 'Anon' + NumberUser;
 	});
 
 	// listener, whenever the server emits 'updatechat', this updates the chat body
-	socket.on('updatechat', function (username, data, colorxx) {
+	socket.on('updatechat', function (username, data) {
 
 		if(focus == true){
 			$(document).attr("title", "ChitChat");
@@ -147,7 +153,7 @@ hr {
 				console.log('New Color: ' + words[1]);
 				ChatColor = words[1];
 			}
-
+			$( "#data" ).focus();
 			return;
 		}
 		
@@ -176,16 +182,23 @@ hr {
 				console.log('You can only change you nickname once.');
 			}
 			
-			
+			$( "#data" ).focus();
 			return;
 		}
 		
 		
 
 		if(username == 'SERVER'){
-			$('#conversation').prepend('<small><b onclick="hello(this);"><i class="ion-ios-analytics"></i> '+username + '</b><span style="color: '+colorxx+';"> ' + data + '</span></small><hr/>');
+			$('#conversation').prepend('<small><i class="ion-ios-analytics"></i> <b>'+username + '</b><span style="color: black;"> ' + data + '</span></small><hr/>');
 		} else {
-			$('#conversation').prepend('<b onclick="hello(this);"><i class="ion-person"></i> '+username + '</b><span style="color: '+ChatColor+';"> ' + data + '</span><hr/>');
+			console.log(username);
+			//console.log(socket.username);
+			if(username == myName){
+				$('#conversation').prepend('<i class="ion-person"></i> <b onclick="hello(this);">'+username + '</b><span style="color: '+ChatColor+';"> ' + data + '</span><hr/>');
+			} else {
+				$('#conversation').prepend('<i class="ion-person"></i> <b onclick="hello(this);">'+username + '</b><span style="color: black;"> ' + data + '</span><hr/>');
+			}
+			
 		}
 		
 
@@ -196,7 +209,10 @@ hr {
 	socket.on('updatechatw', function (stuff) {
 
 		//console.log(stuff);
-		$('#conversation').prepend('<small><i><b onclick="hello(this);"><i class="ion-person"></i> '+stuff.username + '</b> ' + stuff.data + '</i><hr/></small>');
+		$('#conversation').prepend('<small><i><i class="ion-person"></i> <b onclick="hello(this);">'+stuff.username + '</b> ' + stuff.data + '</i><hr/></small>');
+		
+		$( "#data" ).focus();
+
 	});
 
 	// listener, whenever the server emits 'updaterooms', this updates the room the client is in
@@ -307,12 +323,14 @@ hr {
 </nav>
 
 <div class="container">
-<div class="alert alert-info hidden-xs hidden-sm" role="alert">
+	<!--
+	<div class="alert alert-info hidden-xs hidden-sm" role="alert">
 			  
 			  <strong>Welcome To ChitChat!</strong> This is still in Beta mode and new features are being added all the time... Some may work, others may not.
-			</div>
+	</div>
+	-->
 	<div class="row">
-		<div class="col-md-2 hidden-xs hidden-sm well" style="min-height:65vh !important; max-height:65vh !important; overflow-y: scroll;">
+		<div class="col-md-2 hidden-xs hidden-sm well" style="min-height:75vh !important; max-height:75vh !important; overflow-y: scroll;">
 			<b>ROOMS</b><hr/>
 			<div id="rooms"></div>
 			<br/>
@@ -320,23 +338,40 @@ hr {
 			<div id="people"></div>
 			
 		</div>
-		<div class="col-md-10 ">
+		<div class="col-md-10">
 			<!--<div class="alert alert-danger alert-dismissible hidden-xs hidden-sm" role="alert">
 			  <button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>
 			  <strong>Welcome To ChitChat!</strong> This is still in Beta mode and new features are being added all the time... Some may work, others may not.
 			</div>-->
-			<div id="conversation" style="min-height:65vh !important;max-height: 65vh !important;"></div>
+			<div id="conversation" class="well" style="min-height:75vh !important; max-height: 75vh !important;"></div>
 
 		</div>
 	</div>
-
+	
 </div>
 <footer class="footer">
 		 <div class="container" id="footerdiv">
 			<div class="input-group">
 		      <input id="data" type="text" class="form-control" placeholder="Write something here...">
 		      <span class="input-group-btn">
-		        <button id="datasend" class="btn btn-default" type="button">Send!</button>
+		        <button id="datasend" class="btn btn-info" type="button"><i class="ion-paper-airplane"></i></button>
+		      </span>
+		      <span class="input-group-btn">
+		        
+		        <div class="dropup">
+				  <button class="btn btn-danger dropdown-toggle" type="button" id="dropdownMenu2" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+				    <i class="ion-grid"></i>
+				  </button>
+				  <ul class="dropdown-menu dropdown-menu-right" aria-labelledby="dropdownMenu2">
+				    <li><a href="#"><i class="ion-upload"></i> Upload A File</a></li>
+				    <li><a href="#"><i class="ion-image"></i> Upload A Image</a></li>
+				    <li role="separator" class="divider"></li>
+				    <li><a href="#"><i class="ion-code"></i> Create A Snippet</a></li>
+				    <li role="separator" class="divider"></li>
+				    <li><a href="#"><i class="ion-edit"></i> Create A Post</a></li>
+				  </ul>
+				</div>
+		      
 		      </span>
 		    </div><!-- /input-group -->
 
