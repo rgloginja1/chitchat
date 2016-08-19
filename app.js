@@ -6,9 +6,6 @@ var express = require('express')
 
 server.listen(8080);
 
-var sanitize = require('validator').sanitize;
-var createDOMPurify = require('dompurify');
-
 var sqlite3 = require('sqlite3').verbose();
 var db = new sqlite3.Database('mydb_test.db');
 var check;
