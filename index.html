@@ -11,7 +11,9 @@
 
 	 <!-- Bootstrap core CSS -->
 	 <link href="http://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.3.4/css/bootstrap.min.css" rel="stylesheet" media="screen">
-	 <link href="https://bootswatch.com/lumen/bootstrap.css" rel="stylesheet" media="screen">
+	 <link href="https://bootswatch.com/flatly/bootstrap.css" rel="stylesheet" media="screen">
+
+	 <link rel="stylesheet" type="text/css" href="http://code.ionicframework.com/ionicons/2.0.1/css/ionicons.min.css">
 	 <!-- HTML5 shim and Respond.js IE8 support of HTML5 elements and media queries -->
 	 <!--[if lt IE 9]>
 		 <script src="http://cdnjs.cloudflare.com/ajax/libs/html5shiv/3.7.2/html5shiv.js"></script>
@@ -29,8 +31,19 @@ html {
  position: relative;
  max-height: 100%;
  min-height: 100%;
+ overflow: scroll;
+    overflow-x: hidden;
  
 }
+::-webkit-scrollbar {
+    width: 0px;  /* remove scrollbar space */
+    background: transparent;  /* optional: just make scrollbar invisible */
+}
+/* optional: show position indicator in red */
+::-webkit-scrollbar-thumb {
+    background: #FF0000;
+}
+
 body {
  /* Margin bottom by footer height */
  margin-bottom: 60px;
@@ -47,7 +60,7 @@ body {
 
 #conversation {
 	max-height:80% !important;
-	overflow: hidden;
+	overflow-y: scroll;
 }
 .navbar-brand {
     position: absolute;
@@ -60,11 +73,10 @@ body {
 .navbar-toggle {
     z-index:3;
 }
-/* Custom page CSS
--------------------------------------------------- */
-/* Not required for template or sticky footer method. */
 
-
+hr {
+	margin: 10px;
+}
 	 </style>
 <script>
 	var focus = true;
@@ -108,13 +120,13 @@ body {
 	socket.on('connect', function(){
 		// call the server-side function 'adduser' and send one parameter (value of prompt)
 		//socket.emit('adduser', prompt("What's your name?"));
-		var NumberUser = Math.floor((Math.random() * 100000) + 1);
+		var NumberUser = Math.floor((Math.random() * 9999999) + 1);
 
 		socket.emit('adduser','Anon' + NumberUser);
 	});
 
 	// listener, whenever the server emits 'updatechat', this updates the chat body
-	socket.on('updatechat', function (username, data) {
+	socket.on('updatechat', function (username, data, colorxx) {
 
 		if(focus == true){
 			$(document).attr("title", "ChitChat");
@@ -122,7 +134,12 @@ body {
 			$(document).attr("title", "ChitChat - New Message");
 		}
 		
-		$('#conversation').prepend('<b onclick="hello(this);">'+username + '</b> ' + data + '<hr/>');
+		if(username == 'SERVER'){
+			$('#conversation').prepend('<small><b onclick="hello(this);"><i class="ion-ios-analytics"></i> '+username + '</b><span style="color: '+colorxx+';"> ' + data + '</span></small><hr/>');
+		} else {
+			$('#conversation').prepend('<b onclick="hello(this);"><i class="ion-person"></i> '+username + '</b><span style="color: '+colorxx+';"> ' + data + '</span><hr/>');
+		}
+		
 
 		$( "#data" ).focus();
 
@@ -130,8 +147,8 @@ body {
 
 	socket.on('updatechatw', function (stuff) {
 
-		console.log(stuff);
-		$('#conversation').prepend('<b onclick="hello(this);">'+stuff.username + '</b> ' + stuff.data + '<hr/>');
+		//console.log(stuff);
+		$('#conversation').prepend('<small><i><b onclick="hello(this);"><i class="ion-person"></i> '+stuff.username + '</b> ' + stuff.data + '</i><hr/></small>');
 	});
 
 	// listener, whenever the server emits 'updaterooms', this updates the room the client is in
@@ -143,13 +160,13 @@ body {
 
 		$.each(rooms, function(key, value) {
 			if(value == current_room){
-				$('#rooms').append('<div><p><small>' + value + '</small></p></div>');
-				$('#rooms_menu').append('<li><a href="#">'+ value +'</a></li>');
+				$('#rooms').append('<div><p><small><i class="ion-cube"></i> ' + value + '</small></p></div>');
+				$('#rooms_menu').append('<li><a href="#"><i class="ion-cube"></i> '+ value +'</a></li>');
 				
 			}
 			else {
-				$('#rooms').append('<div><p><small><a href="#" onclick="switchRoom(\''+value+'\')">' + value + '</a></small></p></div>');
-				$('#rooms_menu').append('<li><a href="#" onclick="switchRoom(\''+value+'\')">' + value + '</a></li>');
+				$('#rooms').append('<div><p><small><i class="ion-cube"></i> <a href="#" onclick="switchRoom(\''+value+'\')">' + value + '</a></small></p></div>');
+				$('#rooms_menu').append('<li><a href="#" onclick="switchRoom(\''+value+'\')"><i class="ion-cube"></i> ' + value + '</a></li>');
 				
 			}
 		});
@@ -162,8 +179,8 @@ body {
 		
 		$.each(userNamed, function(key, value) {
 			//console.log(value);
-			$('#people').prepend('<p><small>' + value + '</small></p>');
-			$('#people_menu').prepend('<li><a href="#">'+ value +'</a></li>');
+			$('#people').prepend('<p><small><i class="ion-person"></i> ' + value + '</small></p>');
+			$('#people_menu').prepend('<li><a href="#"><i class="ion-person"></i> '+ value +'</a></li>');
 		});
 	});
 
@@ -181,9 +198,10 @@ body {
 			var message = $('#data').val();
 			$('#data').val('');
 			// tell server to execute 'sendchat' and send along one parameter
-			$('#footerdiv').hide();
-			setTimeout(function(){ $('#footerdiv').show(); $( "#data" ).focus(); }, 2000);
-			//$( "#data" ).focus();
+			//$('#footerdiv').hide();
+			
+			//setTimeout(function(){ $('#footerdiv').show(); $( "#data" ).focus(); }, 2000);
+			
 			socket.emit('sendchat', message);
 
 		});
@@ -241,8 +259,12 @@ body {
 </nav>
 
 <div class="container">
+<div class="alert alert-info hidden-xs hidden-sm" role="alert">
+			  
+			  <strong>Welcome To ChitChat!</strong> This is still in Beta mode and new features are being added all the time... Some may work, others may not.
+			</div>
 	<div class="row">
-		<div class="col-md-2 hidden-xs hidden-sm well" style="max-height:75vh !important; overflow-y: scroll;">
+		<div class="col-md-2 hidden-xs hidden-sm well" style="min-height:65vh !important; max-height:65vh !important; overflow-y: scroll;">
 			<b>ROOMS</b><hr/>
 			<div id="rooms"></div>
 			<br/>
@@ -250,12 +272,12 @@ body {
 			<div id="people"></div>
 			
 		</div>
-		<div class="col-md-10">
-			<div class="alert alert-danger alert-dismissible hidden-xs hidden-sm" role="alert">
+		<div class="col-md-10 ">
+			<!--<div class="alert alert-danger alert-dismissible hidden-xs hidden-sm" role="alert">
 			  <button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>
 			  <strong>Welcome To ChitChat!</strong> This is still in Beta mode and new features are being added all the time... Some may work, others may not.
-			</div>
-			<div id="conversation" style="max-height: 75vh !important;"></div>
+			</div>-->
+			<div id="conversation" style="min-height:65vh !important;max-height: 65vh !important;"></div>
 
 		</div>
 	</div>
@@ -266,7 +288,7 @@ body {
 			<div class="input-group">
 		      <input id="data" type="text" class="form-control" placeholder="Write something here...">
 		      <span class="input-group-btn">
-		        <button id="datasend" class="btn btn-default" type="button">Go!</button>
+		        <button id="datasend" class="btn btn-default" type="button">Send!</button>
 		      </span>
 		    </div><!-- /input-group -->
 

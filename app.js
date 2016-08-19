@@ -12,14 +12,15 @@ var createDOMPurify = require('dompurify');
 var sqlite3 = require('sqlite3').verbose();
 var db = new sqlite3.Database('mydb_test.db');
 var check;
+
+var AppPassword = "AdminPassIsNotPassword";
+
+var ChatColor = "black";
+
 db.serialize(function() {
 
-	  db.run("CREATE TABLE if not exists TestA (chatroom, username, data)");
-	  //db.run("DELETE from TestA");
-	  
-	  //db.each("SELECT * FROM TestA", function (err, row) {
-	  //  console.log(row);
-	  //});
+	  db.run("CREATE TABLE if not exists ChatData (chatroom, username, data)");
+	  //db.run("DELETE from ChatData");
 
 });
 
@@ -36,7 +37,7 @@ var usernames = {};
 var muteBool = false;
 
 // rooms which are currently available in chat
-var rooms = ['General','Random','Development','Creepy','Links'];
+var rooms = ['General','Development','Links'];
 
 io.sockets.on('connection', function (socket) {
 	socket.emit('updatepeople', usernames);
@@ -76,7 +77,7 @@ io.sockets.on('connection', function (socket) {
 		
 		db.serialize(function() {
 
-			 db.each("SELECT * FROM TestA WHERE chatroom = 'General'", function (err, row) {
+			 db.each("SELECT * FROM ChatData WHERE chatroom = 'General'", function (err, row) {
 		    	
 		    	console.log(row);
 		    	socket.emit('updatechatw', row);
@@ -93,18 +94,64 @@ io.sockets.on('connection', function (socket) {
 
 	socket.on('sendchat', function (data) {
 		
+		var words = data.split(' ');
 
-		if(data == '/mute') {
-			if (muteBool == false ){
-				muteBool = true;
+		if(words[0] == '/color'){
+			if(!words[1]){
+				console.log('No color chosen');
 			} else {
-				muteBool = false;
+				console.log('New Color: ' + words[1]);
+				ChatColor = words[1];
 			}
-			console.log('MUTE CHANGE:' + muteBool);
+
+			return;
 		}
 
+		if(words[0] == '/mute'){
+			if(!words[1]){
+				console.log('No password supplied!');
+			} else {
 
-		if(data == 'AdminAccessPasswordIsNotHere') {
+				if(words[1] == AppPassword){
+					if (muteBool == false ){
+						muteBool = true;
+					} else {
+						muteBool = false;
+					}
+					console.log('Mute Changes');
+				} else {
+					console.log('Incorrect password supplied.');
+				}
+			}
+
+			return;
+
+		}
+
+		if(words[0] == '/dbclear'){
+			if(!words[1]){
+				console.log('No password supplied!');
+			} else {
+
+				if(words[1] == AppPassword){
+					db.serialize(function() {
+
+						  db.run("DELETE from ChatData");
+
+					});
+					console.log('Chat Database Cleared.');
+					socket.broadcast.emit('updatechat', 'SERVER', socket.username + ' has cleared the DB');
+				} else {
+					console.log('Incorrect password supplied.');
+				}
+			}
+			
+
+			return;
+
+		}
+
+		if(data == AppPassword) {
 			socket.username = "ChitChat Developer";
 		} else {
 			if( data == '' ) {
@@ -137,21 +184,24 @@ io.sockets.on('connection', function (socket) {
 			   	String.prototype.parseHashtag = function() {
 					return this.replace(/[#]+[A-Za-z0-9-_]+/g, function(t) {
 						var tag = t.replace("#","")
-						return t.link("https://twitter.com/hashtag/"+tag);
+						//return t.link("https://twitter.com/hashtag/"+tag);
+						return '<a href="#">#' + tag + '</a>';
 					});
 				};
 
 				var Ggs = Gs.parseHashtag();
 
 				db.serialize(function() {
-					console.log('Running...');
-					db.run("INSERT INTO TestA VALUES (?, ?, ?)", [socket.room,socket.username,Ggs]);
+					//console.log('Running...');
+					db.run("INSERT INTO ChatData VALUES (?, ?, ?)", [socket.room,socket.username,Ggs]);
 				});
 
 			    io.sockets.in(socket.room).emit('updatechat', 
 			            
+
 			            socket.username,
-			           	Ggs
+			           	Ggs,
+			           	ChatColor
 
 			    );
 			}
@@ -172,7 +222,7 @@ io.sockets.on('connection', function (socket) {
 			
 			db.serialize(function() {
 
-				 db.each("SELECT * FROM TestA WHERE chatroom = '"+socket.newroom+"'", function (err, row) {
+				 db.each("SELECT * FROM ChatData WHERE chatroom = '"+socket.newroom+"'", function (err, row) {
 			    	
 			    	console.log(row);
 			    	socket.emit('updatechatw', row);
@@ -189,7 +239,7 @@ io.sockets.on('connection', function (socket) {
 			
 			db.serialize(function() {
 
-				 db.each("SELECT * FROM TestA WHERE chatroom = '"+newroom+"'", function (err, row) {
+				 db.each("SELECT * FROM ChatData WHERE chatroom = '"+newroom+"'", function (err, row) {
 			    	
 			    	console.log(row);
 			    	socket.emit('updatechatw', row);
