@@ -15,7 +15,6 @@ var check;
 
 var AppPassword = "AdminPassIsNotPassword";
 
-var ChatColor = "black";
 
 db.serialize(function() {
 
@@ -84,52 +83,16 @@ io.sockets.on('connection', function (socket) {
 			 });
 		});
 
-		
-
 		socket.emit('updaterooms', rooms, 'General');
 		
-
-
 	});
 
 	socket.on('sendchat', function (data) {
 		
 		var words = data.split(' ');
 
-		if(words[0] == '/color'){
-			if(!words[1]){
-				console.log('No color chosen');
-			} else {
-				console.log('New Color: ' + words[1]);
-				ChatColor = words[1];
-			}
-
-			return;
-		}
-
 		if(words[0] == '/nickname'){
-			if(UNChange == 0){
-				if(!words[1]){
-					console.log('No new nickname set');
-				} else {
-					console.log('New Nickname: ' + words[1]);
-					
-					console.log(usernames);
-					usernames[socket.username] = words[1];
-					socket.username = words[1];	
-					
-					console.log(usernames);
-					socket.emit('updatepeople', usernames);
-				
-				}
-
-				UNChange = 1;
-			} else {
-				console.log('You can only change you nickname once.');
-			}
-			
-			
-			return;
+			delete usernames[socket.username];
 		}
 
 		if(words[0] == '/mute'){
@@ -225,8 +188,7 @@ io.sockets.on('connection', function (socket) {
 			            
 
 			            socket.username,
-			           	Ggs,
-			           	ChatColor
+			           	Ggs
 
 			    );
 			}

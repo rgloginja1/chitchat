@@ -81,6 +81,10 @@ hr {
 <script>
 	var focus = true;
 
+	var ChatColor = "black";
+	
+	var UNChange = 0;
+
 	$( document ).ready(function() {
 	    console.log( "ready!" );
 	    
@@ -112,10 +116,10 @@ hr {
 	 }
 
 
-	//var socket = io.connect('http://localhost:8080');
-	var socket = io.connect('http://45.55.174.18:8080');
+	var socket = io.connect('http://localhost:8080');
+	//var socket = io.connect('http://45.55.174.18:8080');
 	//var socket = io.connect('http://10.1.1.10:8080');
-	
+
 	// on connection to server, ask for user's name with an anonymous callback
 	socket.on('connect', function(){
 		// call the server-side function 'adduser' and send one parameter (value of prompt)
@@ -134,10 +138,49 @@ hr {
 			$(document).attr("title", "ChitChat - New Message");
 		}
 		
+		var words = data.split(' ');
+		console.log(words);
+		
+		if(words[0] == '/color'){
+			if(!words[1]){
+				console.log('No color chosen');
+			} else {
+				console.log('New Color: ' + words[1]);
+				ChatColor = words[1];
+			}
+
+			return;
+		}
+		
+		if(words[0] == '/nickname'){
+			if(UNChange == 0){
+				if(!words[1]){
+					console.log('No new nickname set');
+				} else {
+					console.log('New Nickname: ' + words[1]);
+
+					socket.emit('adduser',words[1]);
+
+					socket.username = words[1];	
+					
+					socket.emit('updatepeople');
+				}
+
+				UNChange = 1;
+			} else {
+				console.log('You can only change you nickname once.');
+			}
+			
+			
+			return;
+		}
+		
+		
+
 		if(username == 'SERVER'){
 			$('#conversation').prepend('<small><b onclick="hello(this);"><i class="ion-ios-analytics"></i> '+username + '</b><span style="color: '+colorxx+';"> ' + data + '</span></small><hr/>');
 		} else {
-			$('#conversation').prepend('<b onclick="hello(this);"><i class="ion-person"></i> '+username + '</b><span style="color: '+colorxx+';"> ' + data + '</span><hr/>');
+			$('#conversation').prepend('<b onclick="hello(this);"><i class="ion-person"></i> '+username + '</b><span style="color: '+ChatColor+';"> ' + data + '</span><hr/>');
 		}
 		
 
