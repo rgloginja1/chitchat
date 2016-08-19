@@ -92,7 +92,30 @@ io.sockets.on('connection', function (socket) {
 		var words = data.split(' ');
 
 		if(words[0] == '/nickname'){
-			delete usernames[socket.username];
+			if(words[1] == 'server'){
+				console.log('Cant create SERVER user');
+				return;
+			} else if (words[1] == 'admin'){
+				console.log('Cant create ADMIN user');
+				return;
+
+			} else if (words[1] == 'developer'){
+				console.log('Cant create DEVELOPER user');
+				return;
+
+			} else if (words[1] == 'administrator'){
+				console.log('Cant create ADMINISTRATOR user');
+				return;
+
+			} else if (words[1] == 'god'){
+				console.log('Cant create GOD user');
+				return;
+
+			
+			}else{
+				delete usernames[socket.username];
+			}
+			
 		}
 
 		if(words[0] == '/mute'){
@@ -129,6 +152,8 @@ io.sockets.on('connection', function (socket) {
 					});
 					console.log('Chat Database Cleared.');
 					socket.broadcast.emit('updatechat', 'SERVER', socket.username + ' has cleared the DB');
+
+					location.reload();
 				} else {
 					console.log('Incorrect password supplied.');
 				}

@@ -41,7 +41,7 @@ html {
 }
 /* optional: show position indicator in red */
 ::-webkit-scrollbar-thumb {
-    background: #FF0000;
+    background: transparent;
 }
 
 body {
@@ -118,8 +118,7 @@ hr {
 
 	//var socket = io.connect('http://localhost:8080');
 	var socket = io.connect('http://45.55.174.18:8080');
-	//var socket = io.connect('http://10.1.1.10:8080');
-
+	
 	// on connection to server, ask for user's name with an anonymous callback
 	socket.on('connect', function(){
 		// call the server-side function 'adduser' and send one parameter (value of prompt)
@@ -152,14 +151,20 @@ hr {
 			return;
 		}
 		
+		if(words[0] == '/dbclear'){
+			location.reload();
+		}
+					
+
 		if(words[0] == '/nickname'){
 			if(UNChange == 0){
 				if(!words[1]){
 					console.log('No new nickname set');
 				} else {
-					console.log('New Nickname: ' + words[1]);
+					
+					newUsername = words[1].substring(0, 20);
 
-					socket.emit('adduser',words[1]);
+					socket.emit('adduser',newUsername.toLowerCase());
 
 					socket.username = words[1];	
 					
